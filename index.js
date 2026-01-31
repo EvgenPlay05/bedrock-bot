@@ -1,42 +1,60 @@
 const bedrock = require('bedrock-protocol')
+const { Configuration, OpenAIApi } = require('openai')
 
+// =======================
+// Налаштування бота
+// =======================
 const client = bedrock.createClient({
-  host: process.env.MC_HOST,       // IP сервера
-  port: Number(process.env.MC_PORT), // порт
-  username: process.env.MC_NAME,   // імʼя бота
+  host: process.env.MC_HOST,
+  port: Number(process.env.MC_PORT) || 19132,
+  username: process.env.MC_NAME || 'ChatGPT',
   offline: true
 })
 
+// =======================
+// Налаштування OpenAI
+// =======================
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY
+})
+const openai = new OpenAIApi(configuration)
+
+// =======================
+// Події бота
+// =======================
 client.on('join', () => {
-  console.log('✅ Joined server')
+  console.log('✅ ChatGPT підключився до сервера')
 })
 
-client.on('spawn', () => {
-  console.log('🟢 Spawned in world')
+client.on('disconnect', reason => {
+  console.log('❌ ChatGPT відключився:', reason)
+})
 
-  // перевірка на наявність entity
-  const waitEntity = setInterval(() => {
-    if (client.entity) {
-      console.log('✅ Bot entity ready at', client.entity.position)
+// =======================
+// Слухати чат та реагувати
+// =======================
+client.on('text', async packet => {
+  const message = packet.message
+  console.log('CHAT:', message)
 
-      // починаємо рухати бота кожні 3 секунди
-      setInterval(() => {
-        client.queue('move_player', {
-          runtime_id: client.entity.runtime_id,
-          position: client.entity.position,
-          pitch: 0,
-          yaw: client.entity.yaw,
-          head_yaw: client.entity.yaw,
-          mode: 0,
-          on_ground: true,
-          riding_runtime_id: 0,
-          tick: Date.now()
-        })
-      }, 3000)
+  // Перевіряємо, чи починається з !GPT або !gpt + відступ
+  if (message.match(/^!gpt\s+/i)) {
+    const prompt = message.replace(/^!gpt\s+/i, '')
+    console.log('Запит до GPT:', prompt)
 
-      clearInterval(waitEntity) // зупиняємо чекання entity
-    } else {
-      console.log('⏳ Bot entity not ready yet...')
+    try {
+      const response = await openai.createChatCompletion({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }]
+      })
+
+      const answer = response.data.choices[0].message.content.trim()
+
+      // Відправляємо відповідь у чат Minecraft
+      client.chat(`<ChatGPT> ${answer}`)
+    } catch (err) {
+      console.error('Помилка GPT:', err)
+      client.chat('<ChatGPT> Вибач, сталася помилка при обробці запиту.')
     }
-  }, 500) // перевіряємо кожні 0.5 секунди
+  }
 })
