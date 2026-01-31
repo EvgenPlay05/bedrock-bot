@@ -14,10 +14,12 @@ client.on('join', () => {
 client.on('spawn', () => {
   console.log('🟢 Spawned in world')
 
-  // мінімальний рух кожні 3 секунди
-  setInterval(() => {
+  // мінімальний рух, тільки якщо entity вже створена
+  const moveInterval = setInterval(() => {
+    if (!client.entity) return // <-- перевірка, щоб не крашнуло
+
     client.queue('move_player', {
-      runtime_id: client.runtimeEntityId,
+      runtime_id: client.entity.runtime_id,
       position: client.entity.position,
       pitch: 0,
       yaw: client.entity.yaw,
