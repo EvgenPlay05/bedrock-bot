@@ -8,9 +8,24 @@ const client = bedrock.createClient({
 })
 
 client.on('join', () => {
-  console.log('✅ Bot joined the server')
+  console.log('✅ Joined server')
 })
 
-client.on('disconnect', reason => {
-  console.log('❌ Disconnected:', reason)
+client.on('spawn', () => {
+  console.log('🟢 Spawned in world')
+
+  // мінімальний рух кожні 3 секунди
+  setInterval(() => {
+    client.queue('move_player', {
+      runtime_id: client.runtimeEntityId,
+      position: client.entity.position,
+      pitch: 0,
+      yaw: client.entity.yaw,
+      head_yaw: client.entity.yaw,
+      mode: 0,
+      on_ground: true,
+      riding_runtime_id: 0,
+      tick: Date.now()
+    })
+  }, 3000)
 })
