@@ -2,15 +2,11 @@
   "name": "bedrock-bot",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "bedrock-protocol": "^3.0.5",
-    "open-assistant": "^1.0.0"
-  },
-  "engines": {
-    "node": "22.x"
+    "bedrock-protocol": "^3.45.0",
+    "node-fetch": "^3.4.0"
   }
 }
