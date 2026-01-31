@@ -1,22 +1,23 @@
 const bedrock = require('bedrock-protocol');
-const OpenAI = require('openai');
+const { Configuration, OpenAIApi } = require('openai');
+
+// =======================
+// Налаштування бота
+// =======================
+const client = bedrock.createClient({
+  host: process.env.MC_HOST,           // IP або домен сервера
+  port: Number(process.env.MC_PORT) || 19132,
+  username: process.env.MC_NAME || 'ChatGPT',
+  offline: true                         // оффлайн-режим
+});
 
 // =======================
 // Налаштування OpenAI
 // =======================
-const openai = new OpenAI({
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY
 });
-
-// =======================
-// Налаштування бота Minecraft
-// =======================
-const client = bedrock.createClient({
-  host: process.env.MC_HOST,
-  port: Number(process.env.MC_PORT) || 19132,
-  username: process.env.MC_NAME || 'ChatGPT',
-  offline: true
-});
+const openai = new OpenAIApi(configuration);
 
 // =======================
 // Події бота
@@ -29,31 +30,35 @@ client.on('disconnect', reason => {
   console.log('❌ ChatGPT відключився:', reason);
 });
 
+client.on('error', err => {
+  console.error('❌ Bedrock Error:', err);
+});
+
 // =======================
-// Слухати чат та реагувати через GPT
+// Слухати чат та реагувати
 // =======================
 client.on('text', async packet => {
   const message = packet.message;
   console.log('CHAT:', message);
 
-  // Якщо повідомлення починається з !gpt
-  if (message.match(/^!gpt\s+/i)) {
+  // Перевіряємо команду !gpt
+  if (/^!gpt\s+/i.test(message)) {
     const prompt = message.replace(/^!gpt\s+/i, '');
     console.log('Запит до GPT:', prompt);
 
     try {
       const response = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-3.5-turbo", // GPT-4 замінено на 3.5
         messages: [{ role: "user", content: prompt }]
       });
 
       const answer = response.choices[0].message.content.trim();
 
       // Відправляємо відповідь у чат Minecraft
-      client.chat(`<ChatGPT> ${answer}`);
+      client.queue('text', { message: `<ChatGPT> ${answer}` });
     } catch (err) {
       console.error('Помилка GPT:', err);
-      client.chat('<ChatGPT> Вибач, сталася помилка при обробці запиту.');
+      client.queue('text', { message: '<ChatGPT> Вибач, сталася помилка.' });
     }
   }
 });
