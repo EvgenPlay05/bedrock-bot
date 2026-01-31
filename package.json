@@ -1,12 +1,14 @@
 {
-  "name": "bedrock-bot",
+  "name": "bedrock-ai-bot",
   "version": "1.0.0",
+  "description": "Minecraft Bedrock AI bot using Open Assistant",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "bedrock-protocol": "^3.45.0",
-    "node-fetch": "^3.3.2"
+    "open-assistant": "^1.0.0"
   }
 }
